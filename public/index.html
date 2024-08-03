@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostr Zap Senders</title>
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
+>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+              <li><strong>zaplist.hivetalk.org</strong></li>
+            </ul>
+            <ul>
+              <li><a href="#">⚡️ Zap</a></li>
+              <li><a href="https://hivetalk.org">HiveTalk</a></li>
+              <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
+
+            </ul>
+          </nav>
+    
+        <h1>Nostr Zap List</h1>
+        <p>Generate a grid and/or image of who sent you zaps, so you can thank them for contributing to a project.
+        Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
+        </p>
+        <form>
+                <div>
+                    <label for="pubkeyInput">
+                        Your Pubkey:
+                    </label>
+                    <input type="text" id="pubkeyInput" placeholder="Enter your pubkey" value="3878d95db7b854c3a0d3b2d6b7bf9bf28b36162be64326f5521ba71cf3b45a69" required>
+                </div>
+
+            <label for="relaysInput">
+                Relays (comma-separated):
+                <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
+            </label>
+            <label for="timeRangeInput">
+                Time Range (How many days ago to look):
+            </label>
+
+            <div class="grid">
+                <div>
+                <input type="number" id="timeRangeInput" value="10" min="1" required>
+
+            </div>
+                <div>
+                        <button type="button" id="fetchButton">Fetch Zap Senders</button>
+                    </div>
+            </div>
+
+        </form>
+
+        <div id="results"></div>
+        <!-- <div class="grid">
+            <button onclick="captureScreenshot()">Create Shareable Image</button>
+        </div>
+        <div>
+            <div id="imageContainer"></div>
+        </div> -->
+    </main>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script type="module" src="script.js"></script>
+    <script>
+        function captureScreenshot() {
+            var div = document.getElementById('results');
+            html2canvas(div).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var link = document.createElement('a');
+                link.href = imgData;
+                link.download = 'screenshot.png';
+                link.click();
+            });
+        }
+    </script>
+
+
+</body>
+</html>
+
+
