@@ -43,16 +43,20 @@
             </label>
             <label for="timeRangeInput">
                 Time Range (How many days ago to look):
-            </label>
+            </label> 
 
             <div class="grid">
+                 <div>
+                    <input type="number" id="timeRangeInput" value="10" min="1" required>
+                </div> 
+                <!-- 
                 <div>
-                <input type="number" id="timeRangeInput" value="10" min="1" required>
-
-            </div>
+                    <label for="startDateInput">Start Date:</label>
+                    <input type="date" id="timeRangeInput" aria-label="Start Date">
+                </div> -->
                 <div>
-                        <button type="button" id="fetchButton">Fetch Zap Senders</button>
-                    </div>
+                    <button type="button" id="fetchButton">Fetch Zap Senders</button>
+                </div>
             </div>
 
         </form>
@@ -67,7 +71,7 @@
     </main>
 
 
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> -->
     <script type="module" src="script.js"></script>
 
 </body>
