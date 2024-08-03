@@ -25,8 +25,8 @@
             </ul>
           </nav>
     
-        <h1>Nostr Zap List</h1>
-        <p>Generate a grid and/or image of who sent you zaps, so you can thank them for contributing to a project.
+        <h1>Nostr ⚡️ Zap List</h1>
+        <p>Generate a grid of who sent you zaps, so you can thank them for contributing to a project.
         Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
         </p>
         <form>
@@ -59,28 +59,16 @@
 
         <div id="results"></div>
         <!-- <div class="grid">
-            <button onclick="captureScreenshot()">Create Shareable Image</button>
-        </div>
-        <div>
+            <button id="captureScreen">Create Shareable Image</button>
             <div id="imageContainer"></div>
-        </div> -->
+        </div>  -->
+        <button id="downloadBtn">Download Result as .html</button>
+
     </main>
+
 
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script type="module" src="script.js"></script>
-    <script>
-        function captureScreenshot() {
-            var div = document.getElementById('results');
-            html2canvas(div).then(function(canvas) {
-                var imgData = canvas.toDataURL('image/png');
-                var link = document.createElement('a');
-                link.href = imgData;
-                link.download = 'screenshot.png';
-                link.click();
-            });
-        }
-    </script>
-
 
 </body>
 </html>
