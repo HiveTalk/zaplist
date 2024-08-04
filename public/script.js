@@ -171,24 +171,7 @@ function downloadResult() {
 }
 
 
-function captureScreenshot() {
-  // doesn't seem to capture the images for some reason.
-  var div = document.getElementById('results');
-  if (!div) {
-      alert('Results section not found!');
-      return;
-  }          
-  html2canvas(div).then(function(canvas) {
-      var imgData = canvas.toDataURL('image/png');
-      var link = document.createElement('a');
-      link.href = imgData;
-      link.download = 'screenshot.png';
-      link.click();
-  });
-}
-
 // Add event listeners to the buttons
 document.getElementById('downloadBtn').addEventListener('click', downloadResult);
-// document.getElementById('captureScreen').addEventListener('click', captureScreenshot);
 
 document.getElementById('fetchButton').addEventListener('click', fetchZapSenders)

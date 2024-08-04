@@ -9,6 +9,7 @@
   href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
 >
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 <body>
@@ -18,7 +19,7 @@
               <li><strong>zaplist.hivetalk.org</strong></li>
             </ul>
             <ul>
-              <li><a href="#">⚡️ Zap</a></li>
+              <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
               <li><a href="https://hivetalk.org">HiveTalk</a></li>
               <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
 
@@ -26,7 +27,8 @@
           </nav>
     
         <h1>Nostr ⚡️ Zap List</h1>
-        <p>Generate a grid of who sent you zaps, so you can thank them for contributing to a project.
+        <p>Generate a grid of who sent you zaps, so you can add it to a blog or project page
+            and thank them for their support.
         Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
         </p>
         <form>
@@ -42,18 +44,13 @@
                 <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
             </label>
             <label for="timeRangeInput">
-                Time Range (How many days ago to look):
+                Time Range (How many days ago):
             </label> 
 
             <div class="grid">
                  <div>
                     <input type="number" id="timeRangeInput" value="10" min="1" required>
                 </div> 
-                <!-- 
-                <div>
-                    <label for="startDateInput">Start Date:</label>
-                    <input type="date" id="timeRangeInput" aria-label="Start Date">
-                </div> -->
                 <div>
                     <button type="button" id="fetchButton">Fetch Zap Senders</button>
                 </div>
@@ -62,16 +59,10 @@
         </form>
 
         <div id="results"></div>
-        <!-- <div class="grid">
-            <button id="captureScreen">Create Shareable Image</button>
-            <div id="imageContainer"></div>
-        </div>  -->
         <button id="downloadBtn">Download Result as .html</button>
 
     </main>
 
-
-    <!-- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> -->
     <script type="module" src="script.js"></script>
 
 </body>
