@@ -5,6 +5,9 @@ Generate a grid of who sent you zaps, so you can thank them for contributing to 
 - currently gets zaps from all relays for a specific user in the last X days
 - generates a grid that can be downloaded as a .html file
 
+<img width="1087" alt="Screenshot 2024-08-04 at 12 27 32 PM" src="https://github.com/user-attachments/assets/12a2681b-fed5-4eb0-a0f8-b2e92583dfba">
+
+
 ## TODO
 
 - grab all avatar images and replaces links with a local copy
@@ -12,6 +15,7 @@ Generate a grid of who sent you zaps, so you can thank them for contributing to 
 - Allow user to pick from a calendar instead of X days
 
 
-## Contributoring
+## Contributing
 
 - New contributors welcome, this is a good micro project to get your feet wet with foss.
+
