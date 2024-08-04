@@ -8,9 +8,10 @@ Generate a grid of who sent you zaps, so you can thank them for contributing to 
 <img width="1087" alt="Screenshot 2024-08-04 at 12 27 32 PM" src="https://github.com/user-attachments/assets/12a2681b-fed5-4eb0-a0f8-b2e92583dfba">
 
 
-## TODO
+## Good First issues (Todo Items)
 
-- grab all avatar images and replaces links with a local copy
+- Add a nostr NIP-07 login
+- grab all avatar images and replaces links with a local copy that you can download as a zip file
 - add optional image download instead of html
 - Allow user to pick from a calendar instead of X days
 
