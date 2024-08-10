@@ -9,13 +9,13 @@
     <meta property="og:type" content="website">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nostr Zap Senders</title>
-    <link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
     <main class="container">
@@ -27,9 +27,8 @@
               <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
               <li><a href="https://hivetalk.org">HiveTalk</a></li>
               <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
-
             </ul>
-          </nav>
+        </nav>
     
         <h1>Nostr ⚡️ Zap List</h1>
         <p>Generate a grid of who sent you zaps, so you can add it to a blog or project page
@@ -37,47 +36,49 @@
         Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
         </p>
         <form>
-                <div>
-                    <label for="pubkeyInput">
-                        Your Pubkey:
-                    </label>
-                    <input type="text" id="pubkeyInput" placeholder="Enter your pubkey" value="3878d95db7b854c3a0d3b2d6b7bf9bf28b36162be64326f5521ba71cf3b45a69" required>
-                </div>
+            <div>
+                <label for="pubkeyInput">
+                    Your Pubkey:
+                </label>
+                <input type="text" id="pubkeyInput" placeholder="Enter your pubkey" value="3878d95db7b854c3a0d3b2d6b7bf9bf28b36162be64326f5521ba71cf3b45a69" required>
+            </div>
 
             <label for="relaysInput">
                 Relays (comma-separated):
                 <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
             </label>
-            <label for="timeRangeInput">
-                Time Range (How many days ago):
+            <label for="dateRangeInput">
+                Time Range:
             </label> 
 
             <div class="grid">
-                 <div>
-                    <input type="number" id="timeRangeInput" value="10" min="1" required>
+                <div>
+                    <input type="text" id="dateRangeInput" placeholder="Select date range" required>
                 </div> 
                 <div>
                     <button type="button" id="fetchButton">Fetch Zap Senders</button>
                 </div>
             </div>
-
         </form>
 
         <div id="results"></div>
         <button id="downloadBtn">Download Result as .html</button>
 
         <h2>Contributing</h2>
-            <p>
-             New contributors welcome, this is a good micro project to get your feet wet with foss.
-            Visit the <a href="https://github.com/HiveTalk/zaplist?tab=readme-ov-file#good-first-issues-todo-items"> Github</a>
-            Readme to find out more.
-            </p>
-
+        <p>
+         New contributors welcome, this is a good micro project to get your feet wet with foss.
+        Visit the <a href="https://github.com/HiveTalk/zaplist?tab=readme-ov-file#good-first-issues-todo-items"> Github</a>
+        Readme to find out more.
+        </p>
     </main>
 
     <script type="module" src="script.js"></script>
-
+    <script>
+        flatpickr("#dateRangeInput", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            defaultDate: [new Date().fp_incr(-10), new Date()],
+        });
+    </script>
 </body>
 </html>
-
-
