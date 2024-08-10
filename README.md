@@ -20,6 +20,7 @@ visit http://localhost:3000
 
 ## Good First issues (Todo Items)
 
+- accept both hex and npub as inputs
 - Add a nostr NIP-07 login
 - grab all avatar images and replaces links with a local copy that you can download as a zip file
 - add optional image download instead of html
