@@ -13,9 +13,33 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .flatpickr-calendar {
+            background: #fff;
+        }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus {
+            background: #8842d5;
+            border-color: #8842d5;
+        }
+        .flatpickr-day.selected.startRange + .endRange:not(:nth-child(7n+1)), .flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n+1)), .flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n+1)) {
+            box-shadow: -10px 0 0 #8842d5;
+        }
+        .flatpickr-day.selected.startRange, .flatpickr-day.startRange.startRange, .flatpickr-day.endRange.startRange {
+            border-radius: 50px 0 0 50px;
+        }
+        .flatpickr-day.selected.endRange, .flatpickr-day.startRange.endRange, .flatpickr-day.endRange.endRange {
+            border-radius: 0 50px 50px 0;
+        }
+        .flatpickr-day.inRange {
+            background: #e9d8f7;
+            border-color: #e9d8f7;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -47,22 +71,19 @@
                 Relays (comma-separated):
                 <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
             </label>
+            
             <label for="dateRangeInput">
                 Time Range:
+                <input type="text" id="dateRangeInput" placeholder="Select date range" required>
             </label> 
 
-            <div class="grid">
-                <div>
-                    <input type="text" id="dateRangeInput" placeholder="Select date range" required>
-                </div> 
-                <div>
-                    <button type="button" id="fetchButton">Fetch Zap Senders</button>
-                </div>
+            <div class="button-container">
+                <button type="button" id="fetchButton">Fetch Zap Senders</button>
+                <button type="button" id="downloadBtn">Download Result as .html</button>
             </div>
         </form>
 
         <div id="results"></div>
-        <button id="downloadBtn">Download Result as .html</button>
 
         <h2>Contributing</h2>
         <p>
@@ -78,6 +99,9 @@
             mode: "range",
             dateFormat: "Y-m-d",
             defaultDate: [new Date().fp_incr(-10), new Date()],
+            onChange: function(selectedDates, dateStr, instance) {
+                instance.element.value = dateStr;
+            }
         });
     </script>
 </body>
