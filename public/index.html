@@ -13,70 +13,74 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css"
 >
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/nostr-tools/lib/nostr.bundle.js"></script>
+<script type="module" src="script.js"></script>
 </head>
 <body>
-    <main class="container">
-        <nav>
-            <ul>
-              <li><strong>zaplist.hivetalk.org</strong></li>
-            </ul>
-            <ul>
-              <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
-              <li><a href="https://hivetalk.org">HiveTalk</a></li>
-              <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
+<main class="container">
+    <nav>
+        <ul>
+          <li><strong>zaplist.hivetalk.org</strong></li>
+        </ul>
+        <ul>
+          <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
+          <li><a href="https://hivetalk.org">HiveTalk</a></li>
+          <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
+          <li><button id="loginButton">Login with Nostr</button></li>
+          <li><button id="logoutButton" style="display: none;">Logout</button></li>
+        </ul>
+    </nav>
 
-            </ul>
-          </nav>
-    
-        <h1>Nostr ⚡️ Zap List</h1>
-        <p>Generate a grid of who sent you zaps, so you can add it to a blog or project page
-            and thank them for their support.
-        Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
-        </p>
-        <form>
-                <div>
-                    <label for="pubkeyInput">
-                        Your Pubkey:
-                    </label>
-                    <input type="text" id="pubkeyInput" placeholder="Enter your pubkey" value="3878d95db7b854c3a0d3b2d6b7bf9bf28b36162be64326f5521ba71cf3b45a69" required>
-                </div>
-
-            <label for="relaysInput">
-                Relays (comma-separated):
-                <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
-            </label>
-            <label for="timeRangeInput">
-                Time Range (How many days ago):
-            </label> 
-
-            <div class="grid">
-                 <div>
-                    <input type="number" id="timeRangeInput" value="10" min="1" required>
-                </div> 
-                <div>
-                    <button type="button" id="fetchButton">Fetch Zap Senders</button>
-                </div>
+    <div id="userInfo" style="display: none;">
+        <div class="grid">
+            <div>
+                <img id="userAvatar" src="" alt="User Avatar" style="width: 100px; height: 100px; border-radius: 50%;">
             </div>
+            <div>
+                <h3 id="userName">User Name</h3>
+                <p>Pubkey: <span id="userPubkey"></span></p>
+            </div>
+        </div>
+    </div>
 
-        </form>
+    <h1>Nostr ⚡️ Zap List</h1>
+    <p>Generate a grid of who sent you zaps, so you can add it to a blog or project page
+        and thank them for their support.
+    Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
+    </p>
+    <form>
+        <label for="relaysInput">
+            Relays (comma-separated):
+            <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
+        </label>
+        <label for="timeRangeInput">
+            Time Range (How many days ago):
+        </label> 
 
-        <div id="results"></div>
-        <button id="downloadBtn">Download Result as .html</button>
+        <div class="grid">
+             <div>
+                <input type="number" id="timeRangeInput" value="10" min="1" required>
+            </div> 
+            <div>
+                <button type="button" id="fetchButton">Fetch Zap Senders</button>
+            </div>
+        </div>
+    </form>
 
-        <h2>Contributing</h2>
-            <p>
-             New contributors welcome, this is a good micro project to get your feet wet with foss.
-            Visit the <a href="https://github.com/HiveTalk/zaplist?tab=readme-ov-file#good-first-issues-todo-items"> Github</a>
-            Readme to find out more.
-            </p>
+    <div id="results"></div>
+    <button id="downloadBtn">Download Result as .html</button>
 
-    </main>
+    <h2>Contributing</h2>
+    <p>
+     New contributors welcome, this is a good micro project to get your feet wet with foss.
+    Visit the <a href="https://github.com/HiveTalk/zaplist?tab=readme-ov-file#good-first-issues-todo-items"> Github</a>
+    Readme to find out more.
+    </p>
+</main>
 
-    <script type="module" src="script.js"></script>
-
+<script type="module" src="script.js"></script>
 </body>
 </html>
 
