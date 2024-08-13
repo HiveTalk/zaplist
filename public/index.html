@@ -15,7 +15,8 @@
 >
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
     <main class="container">
@@ -27,7 +28,6 @@
               <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
               <li><a href="https://hivetalk.org">HiveTalk</a></li>
               <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
-
             </ul>
           </nav>
     
@@ -64,10 +64,8 @@
         </form>
 
         <div id="results"></div>
-        <div class="grid">
-            <button id="downloadHtmlBtn">Download Result as .html</button>
-            <button id="downloadImageBtn">Download Result as Image</button>
-        </div>
+        <button id="downloadBtn">Download Result as .html</button>
+        <button id="downloadAvatarsBtn" style="display: none;">Download Avatars as ZIP</button>
 
         <h2>Contributing</h2>
             <p>
