@@ -66,7 +66,6 @@ async function fetchZapSenders() {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
-      //const localAvatarUrl = await cacheImage(avatarUrl, pubkey)
       const localAvatarUrl = avatarUrl
 
       resultsHtml += `
@@ -91,87 +90,41 @@ async function fetchZapSenders() {
   }
 }
 
-// Function to cache images locally
-async function cacheImage(imageUrl, pubkey) {
-  const cacheDir = './imgstash'
-  const avatarFilename = imageUrl.split('/').pop()
-  //const filename = `${cacheDir}/${pubkey}/${avatarFilename}`
-  const filename = `${cacheDir}/${avatarFilename}`
-
-  // Check if the file already exists
-  if (await fileExists(filename)) {
-    return filename
-  }
-
-  // Download the image and save it to the local cache
-  try {
-    const response = await fetch(imageUrl)
-    const blob = await response.blob()
-    const buffer = await blob.arrayBuffer()
-
-    // Send the image buffer to the server to save
-    await saveFile(filename, buffer, pubkey, avatarFilename)
-    return filename
-  } catch (error) {
-    console.error(`Failed to cache image ${imageUrl}:`, error)
-    return imageUrl
-  }
-}
-
-// Helper function to check if a file exists
-async function fileExists(filePath) {
-  try {
-    const response = await fetch(filePath, { method: 'HEAD' })
-    return response.ok
-  } catch (error) {
-    return false
-  }
-}
-
-// Helper function to save a file
-async function saveFile(filePath, buffer, pubkey, avatarFilename) {
-  try {
-    await fetch('/save-image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ filePath, buffer, pubkey, avatarFilename })
-    })
-  } catch (error) {
-    console.error(`Failed to save file ${filePath}:`, error)
-  }
-}
-
-// Function to download the content inside the <div id="result">
-function downloadResult() {
-  // Get the content inside the <div id="result">
+// Function to download the content inside the <div id="result"> as HTML
+function downloadHtmlResult() {
   const resultDiv = document.getElementById('results');
   if (!resultDiv) {
-      alert('Results section not found!');
-      return;
+    alert('Results section not found!');
+    return;
   }
   const htmlContent = resultDiv.innerHTML;
-  // Create a Blob with the HTML content
   const blob = new Blob([htmlContent], { type: 'text/html' });
-
-  // Create a link element
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'result.html'; // Specify the file name
-
-  // Append the link to the body (required for Firefox)
+  link.download = 'zap_senders.html';
   document.body.appendChild(link);
-
-  // Programmatically click the link to trigger the download
   link.click();
-
-  // Remove the link from the document
   document.body.removeChild(link);
 }
 
+// Function to download the content inside the <div id="result"> as an image
+function downloadImageResult() {
+  const resultDiv = document.getElementById('results');
+  if (!resultDiv) {
+    alert('Results section not found!');
+    return;
+  }
+  html2canvas(resultDiv).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'zap_senders.png';
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
 
 // Add event listeners to the buttons
-document.getElementById('downloadBtn').addEventListener('click', downloadResult);
-
-document.getElementById('fetchButton').addEventListener('click', fetchZapSenders)
+document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlResult);
+document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult);
+document.getElementById('fetchButton').addEventListener('click', fetchZapSenders);
