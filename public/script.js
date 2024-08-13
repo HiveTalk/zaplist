@@ -43,15 +43,6 @@ async function getProfiles(pubkeys, relays) {
   }, {})
 }
 
-async function preloadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(url);
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-    img.src = url;
-  });
-}
-
 async function fetchZapSenders() {
   const pubkeyInput = document.getElementById('pubkeyInput')
   const relaysInput = document.getElementById('relaysInput')
@@ -74,20 +65,12 @@ async function fetchZapSenders() {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
-      
-      let loadedAvatarUrl;
-      try {
-        loadedAvatarUrl = await preloadImage(avatarUrl);
-      } catch (error) {
-        console.error(`Failed to load avatar for ${profile.name || 'Unknown'}:`, error);
-        loadedAvatarUrl = defaultAvatar;
-      }
 
       resultsHtml += `
       <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${loadedAvatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${avatarUrl}" alt="${profile.name || 'Unknown'}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
@@ -121,48 +104,28 @@ function downloadHtmlResult() {
   document.body.removeChild(link);
 }
 
-// Function to download the content inside the <div id="result"> as an image
+// Function to capture and download the content as an image
 async function downloadImageResult() {
-  const resultDiv = document.getElementById('results');
-  if (!resultDiv) {
-    alert('Results section not found!');
-    return;
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({preferCurrentTab: true});
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    await new Promise(resolve => video.onloadedmetadata = resolve);
+    video.play();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    stream.getTracks().forEach(track => track.stop());
+
+    const link = document.createElement("a");
+    link.download = "zap_senders.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  } catch (err) {
+    console.error("Error: " + err);
   }
-
-  // Wait for all images to load
-  const images = resultDiv.getElementsByTagName('img');
-  const imagePromises = Array.from(images).map(img => {
-    if (img.complete) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    });
-  });
-
-  await Promise.all(imagePromises);
-
-  // Now that all images are loaded, create the canvas
-  const canvas = await html2canvas(resultDiv, {
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: null,
-    logging: false,
-    onclone: (clonedDoc) => {
-      const clonedImages = clonedDoc.getElementsByTagName('img');
-      Array.from(clonedImages).forEach((img, index) => {
-        if (img.src !== images[index].src) {
-          img.src = images[index].src;
-        }
-      });
-    }
-  });
-
-  const link = document.createElement('a');
-  link.download = 'zap_senders.png';
-  link.href = canvas.toDataURL('image/png');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 // Add event listeners to the buttons
