@@ -106,39 +106,25 @@ function downloadHtmlResult() {
 
 // Function to capture and download the content as an image
 async function downloadImageResult() {
-  const resultDiv = document.getElementById('results');
-  if (!resultDiv) {
-    alert('Results section not found!');
-    return;
-  }
-
   try {
-    // Wait for images to load
-    const images = resultDiv.getElementsByTagName('img');
-    await Promise.all(Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = img.onerror = resolve;
-      });
-    }));
+    const stream = await navigator.mediaDevices.getDisplayMedia({preferCurrentTab: true});
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    await new Promise(resolve => video.onloadedmetadata = resolve);
+    video.play();
 
-    // Use html2canvas to capture the specific area
-    const canvas = await html2canvas(resultDiv, {
-      backgroundColor: null,
-      scale: 2, // Increase resolution
-      logging: false,
-      useCORS: true,
-      allowTaint: true
-    });
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    stream.getTracks().forEach(track => track.stop());
 
-    // Create a download link for the canvas content
-    const link = document.createElement('a');
-    link.download = 'zap_senders.png';
-    link.href = canvas.toDataURL('image/png');
+    const link = document.createElement("a");
+    link.download = "zap_senders.png";
+    link.href = canvas.toDataURL();
     link.click();
-  } catch (error) {
-    console.error('Error capturing image:', error);
-    alert('Failed to capture image. Please try again.');
+  } catch (err) {
+    console.error("Error: " + err);
   }
 }
 
