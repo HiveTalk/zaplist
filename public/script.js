@@ -108,20 +108,38 @@ function downloadHtmlResult() {
 }
 
 // Function to download the content inside the <div id="result"> as an image
-function downloadImageResult() {
+async function downloadImageResult() {
   const resultDiv = document.getElementById('results');
   if (!resultDiv) {
     alert('Results section not found!');
     return;
   }
-  html2canvas(resultDiv).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'zap_senders.png';
-    link.href = canvas.toDataURL('image/png');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+  // Wait for all images to load
+  const images = resultDiv.getElementsByTagName('img');
+  const imagePromises = Array.from(images).map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
   });
+
+  await Promise.all(imagePromises);
+
+  // Now that all images are loaded, create the canvas
+  const canvas = await html2canvas(resultDiv, {
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  });
+
+  const link = document.createElement('a');
+  link.download = 'zap_senders.png';
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // Add event listeners to the buttons
