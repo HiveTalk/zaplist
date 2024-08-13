@@ -48,6 +48,7 @@ async function fetchZapSenders() {
   const relaysInput = document.getElementById('relaysInput')
   const timeRangeInput = document.getElementById('timeRangeInput')
   const resultsDiv = document.getElementById('results')
+  const downloadAvatarsBtn = document.getElementById('downloadAvatarsBtn')
   
   const myPubkey = pubkeyInput.value.trim()
   const relays = relaysInput.value.split(',').map(relay => relay.trim())
@@ -65,14 +66,16 @@ async function fetchZapSenders() {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
+      const localAvatarUrl = avatarUrl
 
       resultsHtml += `
       <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${avatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${localAvatarUrl}" alt="${profile.name || 'Unknown'}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='${defaultAvatar}';">
+                 onerror="this.onerror=null; this.src='${defaultAvatar}';"
+                 data-original-src="${localAvatarUrl}">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${profile.name || 'Unknown'}</p>
         </div>
@@ -82,53 +85,64 @@ async function fetchZapSenders() {
     resultsHtml += '</div>'
 
     resultsDiv.innerHTML = resultsHtml || 'No zap senders found.'
+    downloadAvatarsBtn.style.display = 'inline-block'
   } catch (error) {
     resultsDiv.innerHTML = `Error: ${error.message}`
+    downloadAvatarsBtn.style.display = 'none'
   }
 }
 
-// Function to download the content inside the <div id="result"> as HTML
-function downloadHtmlResult() {
+// Function to download the content inside the <div id="result">
+function downloadResult() {
   const resultDiv = document.getElementById('results');
   if (!resultDiv) {
-    alert('Results section not found!');
-    return;
+      alert('Results section not found!');
+      return;
   }
   const htmlContent = resultDiv.innerHTML;
   const blob = new Blob([htmlContent], { type: 'text/html' });
+
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'zap_senders.html';
+  link.download = 'result.html';
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
-// Function to capture and download the content as an image
-async function downloadImageResult() {
-  try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({preferCurrentTab: true});
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    await new Promise(resolve => video.onloadedmetadata = resolve);
-    video.play();
-
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    stream.getTracks().forEach(track => track.stop());
-
-    const link = document.createElement("a");
-    link.download = "zap_senders.png";
-    link.href = canvas.toDataURL();
-    link.click();
-  } catch (err) {
-    console.error("Error: " + err);
+// Function to download avatar images as a zip file
+async function downloadAvatars() {
+  const resultDiv = document.getElementById('results');
+  if (!resultDiv) {
+    alert('Results section not found!');
+    return;
   }
+
+  const images = resultDiv.querySelectorAll('img');
+  const zip = new JSZip();
+
+  for (let i = 0; i < images.length; i++) {
+    const img = images[i];
+    const src = img.getAttribute('data-original-src');
+    const alt = img.getAttribute('alt');
+    
+    try {
+      const response = await fetch(src);
+      const blob = await response.blob();
+      zip.file(`${alt || 'unknown'}_${i}.jpg`, blob);
+    } catch (error) {
+      console.error(`Failed to fetch image: ${src}`, error);
+    }
+  }
+
+  zip.generateAsync({type:"blob"})
+    .then(function(content) {
+      saveAs(content, "avatars.zip");
+    });
 }
 
 // Add event listeners to the buttons
-document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlResult);
-document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult);
+document.getElementById('downloadBtn').addEventListener('click', downloadResult);
 document.getElementById('fetchButton').addEventListener('click', fetchZapSenders);
+document.getElementById('downloadAvatarsBtn').addEventListener('click', downloadAvatars);
