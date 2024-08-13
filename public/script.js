@@ -43,6 +43,15 @@ async function getProfiles(pubkeys, relays) {
   }, {})
 }
 
+async function preloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(url);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.src = url;
+  });
+}
+
 async function fetchZapSenders() {
   const pubkeyInput = document.getElementById('pubkeyInput')
   const relaysInput = document.getElementById('relaysInput')
@@ -62,20 +71,25 @@ async function fetchZapSenders() {
 
     let resultsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
     for (const pubkey of senderPubkeys) {
-
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
-      const localAvatarUrl = avatarUrl
+      
+      let loadedAvatarUrl;
+      try {
+        loadedAvatarUrl = await preloadImage(avatarUrl);
+      } catch (error) {
+        console.error(`Failed to load avatar for ${profile.name || 'Unknown'}:`, error);
+        loadedAvatarUrl = defaultAvatar;
+      }
 
       resultsHtml += `
       <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${localAvatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${loadedAvatarUrl}" alt="${profile.name || 'Unknown'}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='${defaultAvatar}';"
-                 data-original-src="${localAvatarUrl}">
+                 onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${profile.name || 'Unknown'}</p>
         </div>
@@ -131,7 +145,16 @@ async function downloadImageResult() {
   const canvas = await html2canvas(resultDiv, {
     useCORS: true,
     allowTaint: true,
-    backgroundColor: null
+    backgroundColor: null,
+    logging: false,
+    onclone: (clonedDoc) => {
+      const clonedImages = clonedDoc.getElementsByTagName('img');
+      Array.from(clonedImages).forEach((img, index) => {
+        if (img.src !== images[index].src) {
+          img.src = images[index].src;
+        }
+      });
+    }
   });
 
   const link = document.createElement('a');
