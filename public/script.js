@@ -131,17 +131,8 @@ function downloadHtmlResult() {
 
 async function downloadImageResult() {
   try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({ preferCurrentTab: true });
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    await video.play();
-
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    stream.getTracks().forEach(track => track.stop());
-
+    const resultDiv = document.getElementById('results');
+    const canvas = await html2canvas(resultDiv);
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
     link.href = canvas.toDataURL();
@@ -198,7 +189,8 @@ function updateLoginState() {
   if (loggedInUser) {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
-    zapLink.innerHTML = `<img src="https://api.dicebear.com/6.x/identicon/svg?seed=${loggedInUser}" alt="User Avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 5px;"> ⚡️ Zap`;
+    const avatarUrl = `https://api.dicebear.com/6.x/identicon/svg?seed=${loggedInUser}`;
+    zapLink.innerHTML = `<img src="${avatarUrl}" alt="User Avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 5px;"> ⚡️ Zap`;
   } else {
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
