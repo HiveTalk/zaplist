@@ -31,3 +31,10 @@ visit http://localhost:3000
 
 - New contributors welcome, this is a good micro project to get your feet wet with foss.
 
+## Contributors
+
+<a href="https://github.com/hivetalk/zaplist/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=hivetalk/zaplist" />
+</a>
+
+
