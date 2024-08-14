@@ -186,6 +186,7 @@ function logout() {
   document.getElementById('pubkeyInput').value = '';
   document.getElementById('userProfile').style.display = 'none';
   document.getElementById('pubkeyInputContainer').style.display = 'block';
+  document.body.style.backgroundImage = 'none';
 }
 
 async function fetchUserProfile(pubkey) {
@@ -198,6 +199,11 @@ async function fetchUserProfile(pubkey) {
   document.getElementById('userName').textContent = profile.name || 'Unknown';
   document.getElementById('userProfile').style.display = 'block';
   document.getElementById('pubkeyInputContainer').style.display = 'none';
+
+  // Set the banner as the background image
+  if (profile.banner) {
+    document.body.style.backgroundImage = `url(${profile.banner})`;
+  }
 }
 
 function updateLoginState() {
@@ -208,8 +214,8 @@ function updateLoginState() {
   if (loggedInUser) {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
-    const avatarUrl = `https://api.dicebear.com/6.x/identicon/svg?seed=${loggedInUser}`;
-    zapLink.innerHTML = `<img src="${avatarUrl}" alt="User Avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 5px;"> ⚡️ Zap`;
+    const avatarUrl = document.getElementById('userAvatar').src;
+    zapLink.innerHTML = `<img src="${avatarUrl}" alt="User Avatar"> ⚡️ Zap`;
   } else {
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
