@@ -195,7 +195,6 @@ async function fetchUserProfile(pubkey) {
   const profile = profiles[pubkey] || {};
 
   document.getElementById('userBanner').src = profile.banner || '';
-  document.getElementById('userAvatar').src = profile.avatar || '';
   document.getElementById('userName').textContent = profile.name || 'Unknown';
   document.getElementById('userProfile').style.display = 'block';
   document.getElementById('pubkeyInputContainer').style.display = 'none';
@@ -214,8 +213,7 @@ function updateLoginState() {
   if (loggedInUser) {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
-    const avatarUrl = document.getElementById('userAvatar').src;
-    zapLink.innerHTML = `<img src="${avatarUrl}" alt="User Avatar"> ⚡️ Zap`;
+    zapLink.innerHTML = '⚡️ Zap';
   } else {
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
