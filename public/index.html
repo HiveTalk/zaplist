@@ -15,7 +15,26 @@
 >
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        .flatpickr-calendar {
+            background: #8b5cf6;
+            color: #fff;
+        }
+        .flatpickr-day {
+            color: #fff;
+        }
+        .flatpickr-day.selected {
+            background: #4c1d95;
+            border-color: #4c1d95;
+        }
+        .flatpickr-day:hover {
+            background: #6d28d9;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -24,10 +43,11 @@
               <li><strong>zaplist.hivetalk.org</strong></li>
             </ul>
             <ul>
+              <li><a href="#" id="loginBtn">Login</a></li>
+              <li><a href="#" id="logoutBtn" style="display: none;">Logout</a></li>
               <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
               <li><a href="https://hivetalk.org">HiveTalk</a></li>
               <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
-
             </ul>
           </nav>
     
@@ -48,13 +68,13 @@
                 Relays (comma-separated):
                 <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
             </label>
-            <label for="timeRangeInput">
-                Time Range (How many days ago):
+            <label for="dateRangeInput">
+                Date Range:
             </label> 
 
             <div class="grid">
                  <div>
-                    <input type="number" id="timeRangeInput" value="10" min="1" required>
+                    <input type="text" id="dateRangeInput" placeholder="Select date range" required>
                 </div> 
                 <div>
                     <button type="button" id="fetchButton">Fetch Zap Senders</button>
@@ -64,7 +84,9 @@
         </form>
 
         <div id="results"></div>
-        <button id="downloadBtn">Download Result as .html</button>
+        <button id="downloadHtmlBtn">Download Result as .html</button>
+        <button id="downloadImageBtn">Download Result as Image</button>
+        <button id="downloadAvatarsBtn" style="display: none;">Download Avatars as ZIP</button>
 
         <h2>Contributing</h2>
             <p>
