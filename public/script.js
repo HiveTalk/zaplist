@@ -55,7 +55,8 @@ async function getProfiles(pubkeys, relays) {
     const content = JSON.parse(profile.content)
     acc[profile.pubkey] = {
       name: content.name,
-      avatar: content.picture
+      avatar: content.picture,
+      banner: content.banner
     }
     return acc
   }, {})
@@ -110,7 +111,6 @@ async function fetchZapSenders() {
   }
 }
 
-// Function to download the content inside the <div id="result">
 function downloadHtmlResult() {
   const resultDiv = document.getElementById('results');
   if (!resultDiv) {
@@ -132,10 +132,14 @@ function downloadHtmlResult() {
 async function downloadImageResult() {
   try {
     const resultDiv = document.getElementById('results');
-    const canvas = await html2canvas(resultDiv);
+    const canvas = await html2canvas(resultDiv, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null
+    });
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
-    link.href = canvas.toDataURL();
+    link.href = canvas.toDataURL('image/png');
     link.click();
   } catch (err) {
     console.error("Error: " + err);
@@ -169,6 +173,7 @@ async function login() {
     loggedInUser = pubkey;
     updateLoginState();
     document.getElementById('pubkeyInput').value = pubkey;
+    await fetchUserProfile(pubkey);
   } catch (error) {
     console.error('Error during login:', error);
     alert('Failed to login. Please try again.');
@@ -179,6 +184,20 @@ function logout() {
   loggedInUser = null;
   updateLoginState();
   document.getElementById('pubkeyInput').value = '';
+  document.getElementById('userProfile').style.display = 'none';
+  document.getElementById('pubkeyInputContainer').style.display = 'block';
+}
+
+async function fetchUserProfile(pubkey) {
+  const relays = document.getElementById('relaysInput').value.split(',').map(relay => relay.trim());
+  const profiles = await getProfiles([pubkey], relays);
+  const profile = profiles[pubkey] || {};
+
+  document.getElementById('userBanner').src = profile.banner || '';
+  document.getElementById('userAvatar').src = profile.avatar || '';
+  document.getElementById('userName').textContent = profile.name || 'Unknown';
+  document.getElementById('userProfile').style.display = 'block';
+  document.getElementById('pubkeyInputContainer').style.display = 'none';
 }
 
 function updateLoginState() {
