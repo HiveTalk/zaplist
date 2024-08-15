@@ -141,9 +141,21 @@ async function downloadImageResult() {
         const images = clonedDoc.getElementsByTagName('img');
         for (let img of images) {
           img.crossOrigin = 'anonymous';
+          // Force image load
+          img.src = img.src;
         }
       }
     });
+    
+    // Wait for all images to load
+    await Promise.all(Array.from(canvas.getElementsByTagName('img')).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    }));
+
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
     link.href = canvas.toDataURL('image/png');
