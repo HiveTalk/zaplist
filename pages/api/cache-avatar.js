@@ -1,11 +1,24 @@
 import { IncomingForm } from 'formidable'
 import fs from 'fs'
 import path from 'path'
+import sharp from 'sharp'
 
 export const config = {
   api: {
     bodyParser: false,
   },
+}
+
+async function convertToPng(inputPath, outputPath) {
+  try {
+    await sharp(inputPath)
+      .png()
+      .toFile(outputPath)
+    return true
+  } catch (error) {
+    console.error('Error converting image to PNG:', error)
+    return false
+  }
 }
 
 export default async function handler(req, res) {
@@ -28,15 +41,19 @@ export default async function handler(req, res) {
     }
 
     const file = files.file[0]
-    const newPath = path.join(form.uploadDir, file.originalFilename)
+    const newPath = path.join(form.uploadDir, `${path.parse(file.originalFilename).name}.png`)
 
     try {
-      await fs.promises.rename(file.filepath, newPath)
+      const conversionSuccess = await convertToPng(file.filepath, newPath)
+      if (!conversionSuccess) {
+        throw new Error('Failed to convert image to PNG')
+      }
+      await fs.promises.unlink(file.filepath) // Remove the original file
       const relativePath = path.relative(process.cwd(), newPath).replace(/\\/g, '/')
-      res.status(200).send(`/${relativePath}`)
+      res.status(200).json({ url: `/${relativePath}` })
     } catch (error) {
-      console.error('Error moving file:', error)
-      res.status(500).json({ error: 'Error moving file' })
+      console.error('Error processing file:', error)
+      res.status(500).json({ error: 'Error processing file' })
     }
   })
 }
