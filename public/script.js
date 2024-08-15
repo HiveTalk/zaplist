@@ -3,6 +3,7 @@ import { SimplePool, nip19 } from 'https://esm.sh/nostr-tools@1.17.0'
 const pool = new SimplePool()
 
 let loggedInUser = null
+const cachedAvatars = new Map()
 
 function convertToHexIfNpub(pubkey) {
   if (pubkey.startsWith('npub')) {
@@ -62,6 +63,33 @@ async function getProfiles(pubkeys, relays) {
   }, {})
 }
 
+async function cacheAvatar(url, npub) {
+  try {
+    const response = await fetch(url)
+    const blob = await response.blob()
+    const fileName = `avatar_${npub}.${blob.type.split('/')[1]}`
+    const formData = new FormData()
+    formData.append('file', blob, fileName)
+
+    const cacheResponse = await fetch('/api/cache-avatar', {
+      method: 'POST',
+      body: formData
+    })
+
+    if (cacheResponse.ok) {
+      const cachedUrl = await cacheResponse.text()
+      cachedAvatars.set(npub, cachedUrl)
+      return cachedUrl
+    } else {
+      console.error('Failed to cache avatar:', await cacheResponse.text())
+      return url
+    }
+  } catch (error) {
+    console.error('Error caching avatar:', error)
+    return url
+  }
+}
+
 async function fetchZapSenders() {
   const pubkeyInput = document.getElementById('pubkeyInput')
   const relaysInput = document.getElementById('relaysInput')
@@ -86,16 +114,16 @@ async function fetchZapSenders() {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
-      const localAvatarUrl = avatarUrl
+      const cachedAvatarUrl = await cacheAvatar(avatarUrl, npub)
 
       resultsHtml += `
       <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${localAvatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${cachedAvatarUrl}" alt="${profile.name || 'Unknown'}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';"
-                 data-original-src="${localAvatarUrl}">
+                 data-original-src="${cachedAvatarUrl}">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${profile.name || 'Unknown'}</p>
         </div>
@@ -141,14 +169,13 @@ async function downloadImageResult() {
         const images = clonedDoc.getElementsByTagName('img');
         for (let img of images) {
           img.crossOrigin = 'anonymous';
-          // Force image load
           img.src = img.src;
         }
       }
     });
     
     // Wait for all images to load
-    await Promise.all(Array.from(canvas.getElementsByTagName('img')).map(img => {
+    await Promise.all(Array.from(resultDiv.getElementsByTagName('img')).map(img => {
       if (img.complete) return Promise.resolve();
       return new Promise(resolve => {
         img.onload = resolve;
@@ -214,8 +241,12 @@ async function fetchUserProfile(pubkey) {
   const profiles = await getProfiles([pubkey], relays);
   const profile = profiles[pubkey] || {};
 
+  const npub = nip19.npubEncode(pubkey);
+  const avatarUrl = profile.avatar || '';
+  const cachedAvatarUrl = avatarUrl ? await cacheAvatar(avatarUrl, npub) : '';
+
   document.getElementById('userBanner').src = profile.banner || '';
-  document.getElementById('userAvatar').src = profile.avatar || '';
+  document.getElementById('userAvatar').src = cachedAvatarUrl;
   document.getElementById('userName').textContent = profile.name || 'Unknown';
   document.getElementById('userProfile').style.display = 'block';
   document.getElementById('pubkeyInputContainer').style.display = 'none';
