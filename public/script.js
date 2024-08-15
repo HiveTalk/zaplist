@@ -67,7 +67,8 @@ async function cacheAvatar(url, npub) {
   try {
     const response = await fetch(url)
     const blob = await response.blob()
-    const fileName = `avatar_${npub}.${blob.type.split('/')[1]}`
+    const fileExtension = blob.type.split('/')[1]
+    const fileName = `avatar_${npub}.${fileExtension}`
     const formData = new FormData()
     formData.append('file', blob, fileName)
 
@@ -160,28 +161,33 @@ function downloadHtmlResult() {
 async function downloadImageResult() {
   try {
     const resultDiv = document.getElementById('results');
+    
+    // Pre-load all images
+    const images = resultDiv.getElementsByTagName('img');
+    await Promise.all(Array.from(images).map(img => {
+      return new Promise((resolve, reject) => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = resolve;
+          img.onerror = reject;
+        }
+      });
+    }));
+
     const canvas = await html2canvas(resultDiv, {
       useCORS: true,
       allowTaint: true,
       backgroundColor: null,
       logging: true,
       onclone: (clonedDoc) => {
-        const images = clonedDoc.getElementsByTagName('img');
-        for (let img of images) {
+        const clonedImages = clonedDoc.getElementsByTagName('img');
+        for (let img of clonedImages) {
           img.crossOrigin = 'anonymous';
-          img.src = img.src;
+          img.src = img.getAttribute('data-original-src') || img.src;
         }
       }
     });
-    
-    // Wait for all images to load
-    await Promise.all(Array.from(resultDiv.getElementsByTagName('img')).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    }));
 
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
@@ -202,7 +208,7 @@ async function downloadAvatars() {
     const img = images[i];
     const response = await fetch(img.getAttribute('data-original-src'));
     const blob = await response.blob();
-    zip.file(`avatar_${i + 1}.jpg`, blob);
+    zip.file(`avatar_${i + 1}.${blob.type.split('/')[1]}`, blob);
   }
 
   const content = await zip.generateAsync({ type: "blob" });
