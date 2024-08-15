@@ -135,7 +135,14 @@ async function downloadImageResult() {
     const canvas = await html2canvas(resultDiv, {
       useCORS: true,
       allowTaint: true,
-      backgroundColor: null
+      backgroundColor: null,
+      logging: true,
+      onclone: (clonedDoc) => {
+        const images = clonedDoc.getElementsByTagName('img');
+        for (let img of images) {
+          img.crossOrigin = 'anonymous';
+        }
+      }
     });
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
@@ -143,6 +150,7 @@ async function downloadImageResult() {
     link.click();
   } catch (err) {
     console.error("Error: " + err);
+    alert("An error occurred while generating the image. Please try again.");
   }
 }
 
@@ -195,6 +203,7 @@ async function fetchUserProfile(pubkey) {
   const profile = profiles[pubkey] || {};
 
   document.getElementById('userBanner').src = profile.banner || '';
+  document.getElementById('userAvatar').src = profile.avatar || '';
   document.getElementById('userName').textContent = profile.name || 'Unknown';
   document.getElementById('userProfile').style.display = 'block';
   document.getElementById('pubkeyInputContainer').style.display = 'none';
