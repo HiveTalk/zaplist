@@ -166,12 +166,14 @@ async function downloadImageResult() {
     const images = resultDiv.getElementsByTagName('img');
     await Promise.all(Array.from(images).map(img => {
       return new Promise((resolve, reject) => {
-        if (img.complete) {
+        const newImg = new Image();
+        newImg.crossOrigin = 'anonymous';
+        newImg.onload = () => {
+          img.src = newImg.src;
           resolve();
-        } else {
-          img.onload = resolve;
-          img.onerror = reject;
-        }
+        };
+        newImg.onerror = reject;
+        newImg.src = img.getAttribute('data-original-src') || img.src;
       });
     }));
 
@@ -184,7 +186,6 @@ async function downloadImageResult() {
         const clonedImages = clonedDoc.getElementsByTagName('img');
         for (let img of clonedImages) {
           img.crossOrigin = 'anonymous';
-          img.src = img.getAttribute('data-original-src') || img.src;
         }
       }
     });
