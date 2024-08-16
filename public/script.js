@@ -165,15 +165,14 @@ async function downloadImageResult() {
     // Pre-load all images
     const images = resultDiv.getElementsByTagName('img');
     await Promise.all(Array.from(images).map(img => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const newImg = new Image();
         newImg.crossOrigin = 'anonymous';
         newImg.onload = () => {
           img.src = newImg.src;
           resolve();
         };
-        newImg.onerror = (error) => {
-          console.error('Error loading image:', error);
+        newImg.onerror = () => {
           img.src = 'https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg'; // Default avatar
           resolve();
         };
