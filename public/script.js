@@ -165,7 +165,7 @@ async function downloadImageResult() {
     // Pre-load all images
     const images = resultDiv.getElementsByTagName('img');
     await Promise.all(Array.from(images).map(img => {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const newImg = new Image();
         newImg.crossOrigin = 'anonymous';
         newImg.onload = () => {
@@ -173,12 +173,16 @@ async function downloadImageResult() {
           resolve();
         };
         newImg.onerror = () => {
+          console.error(`Failed to load image: ${newImg.src}`);
           img.src = 'https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg'; // Default avatar
           resolve();
         };
         newImg.src = img.getAttribute('data-original-src') || img.src;
       });
     }));
+
+    // Wait for a short time to ensure all images are rendered
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const canvas = await html2canvas(resultDiv, {
       useCORS: true,
