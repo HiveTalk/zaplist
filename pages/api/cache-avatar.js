@@ -50,6 +50,7 @@ export default async function handler(req, res) {
       }
       await fs.promises.unlink(file.filepath) // Remove the original file
       const relativePath = path.relative(process.cwd(), newPath).replace(/\\/g, '/')
+      res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
       res.status(200).json({ url: `/${relativePath}` })
     } catch (error) {
       console.error('Error processing file:', error)
