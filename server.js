@@ -11,8 +11,7 @@ app.get('/', (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(express.json({ limit: '50mb' })); // Increase the limit if necessary
+app.use(express.json({ limit: '50mb' }));
 
 // Function to convert image to PNG format
 const convertToPNG = async (buffer) => {
