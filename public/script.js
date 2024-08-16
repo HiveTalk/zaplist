@@ -172,7 +172,11 @@ async function downloadImageResult() {
           img.src = newImg.src;
           resolve();
         };
-        newImg.onerror = reject;
+        newImg.onerror = (error) => {
+          console.error('Error loading image:', error);
+          img.src = 'https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg'; // Default avatar
+          resolve();
+        };
         newImg.src = img.getAttribute('data-original-src') || img.src;
       });
     }));
