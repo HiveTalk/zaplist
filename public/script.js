@@ -5,6 +5,8 @@ const pool = new SimplePool()
 let loggedInUser = null
 let zapSendersResults = null
 
+const defaultAvatar = "https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg"
+
 function convertToHexIfNpub(pubkey) {
   if (pubkey.startsWith('npub')) {
     try {
@@ -80,7 +82,6 @@ async function fetchZapSenders() {
     myPubkey = convertToHexIfNpub(myPubkey)
     const senderPubkeys = await getZapSenders(myPubkey, relays, startDate, endDate)
     const profiles = await getProfiles(senderPubkeys, relays)
-    const defaultAvatar = "https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg"
 
     zapSendersResults = senderPubkeys.map(pubkey => {
       const profile = profiles[pubkey] || {}
@@ -113,23 +114,13 @@ async function fetchZapSenders() {
   }
 }
 
-async function convertImageToDataURL(url) {
+function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0)
-      resolve(canvas.toDataURL('image/png'))
-    }
-    img.onerror = () => {
-      console.error(`Failed to load image: ${url}`)
-      resolve(null) // Resolve with null instead of rejecting
-    }
-    img.src = url
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
+    img.src = src
   })
 }
 
@@ -144,21 +135,26 @@ async function downloadImageResult() {
     snapshotContainer.style.width = resultDiv.offsetWidth + 'px'
     document.body.appendChild(snapshotContainer)
 
-    // Preload and convert images
-    const convertedAvatars = await Promise.all(
+    // Preload images
+    const loadedImages = await Promise.all(
       zapSendersResults.map(async (sender) => {
-        const convertedUrl = await convertImageToDataURL(sender.avatarUrl)
-        return convertedUrl || sender.avatarUrl // Fall back to original URL if conversion fails
+        try {
+          return await loadImage(sender.avatarUrl)
+        } catch (error) {
+          console.error(`Error loading image for ${sender.name}:`, error)
+          return await loadImage(defaultAvatar)
+        }
       })
     )
 
-    // Create content with converted images
+    // Create content with loaded images
     let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
     zapSendersResults.forEach((sender, index) => {
+      const img = loadedImages[index]
       contentHtml += `
       <div style="width: 80px; text-align: center;">
         <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-          <img src="${convertedAvatars[index]}" alt="${sender.name}" 
+          <img src="${img.src}" alt="${sender.name}" 
                style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
