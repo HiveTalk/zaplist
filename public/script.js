@@ -3,7 +3,7 @@ import { SimplePool, nip19 } from 'https://esm.sh/nostr-tools@1.17.0'
 const pool = new SimplePool()
 
 let loggedInUser = null
-const cachedAvatars = new Map()
+let zapSendersResults = null
 
 function convertToHexIfNpub(pubkey) {
   if (pubkey.startsWith('npub')) {
@@ -82,21 +82,24 @@ async function fetchZapSenders() {
     const profiles = await getProfiles(senderPubkeys, relays)
     const defaultAvatar = "https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg"
 
-    let resultsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
-    for (const pubkey of senderPubkeys) {
+    zapSendersResults = senderPubkeys.map(pubkey => {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
+      return { npub, name: profile.name || 'Unknown', avatarUrl }
+    })
 
+    let resultsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
+    for (const sender of zapSendersResults) {
       resultsHtml += `
-      <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
+      <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${avatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${sender.avatarUrl}" alt="${sender.name}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
-          <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${profile.name || 'Unknown'}</p>
+          <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
         </div>
       </a>
     `
@@ -110,23 +113,66 @@ async function fetchZapSenders() {
   }
 }
 
+async function preloadAndConvertImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+    img.src = url
+  })
+}
+
 async function downloadImageResult() {
   try {
-    const fetchButton = document.getElementById('fetchButton');
-    const downloadImageBtn = document.getElementById('downloadImageBtn');
-    const resultDiv = document.getElementById('results');
+    const fetchButton = document.getElementById('fetchButton')
+    const downloadImageBtn = document.getElementById('downloadImageBtn')
+    const resultDiv = document.getElementById('results')
     
     // Create a container for the snapshot
-    const snapshotContainer = document.createElement('div');
-    snapshotContainer.style.position = 'absolute';
-    snapshotContainer.style.left = '-9999px';
-    snapshotContainer.style.width = resultDiv.offsetWidth + 'px';
-    document.body.appendChild(snapshotContainer);
+    const snapshotContainer = document.createElement('div')
+    snapshotContainer.style.position = 'absolute'
+    snapshotContainer.style.left = '-9999px'
+    snapshotContainer.style.width = resultDiv.offsetWidth + 'px'
+    document.body.appendChild(snapshotContainer)
 
-    // Clone the content between the buttons
-    const clone = document.createElement('div');
-    clone.innerHTML = resultDiv.innerHTML;
-    snapshotContainer.appendChild(clone);
+    // Preload and convert images
+    const convertedAvatars = await Promise.all(
+      zapSendersResults.map(async (sender) => {
+        try {
+          return await preloadAndConvertImage(sender.avatarUrl)
+        } catch (error) {
+          console.error(`Error converting image for ${sender.name}:`, error)
+          return sender.avatarUrl // Fallback to original URL if conversion fails
+        }
+      })
+    )
+
+    // Create content with converted images
+    let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
+    zapSendersResults.forEach((sender, index) => {
+      contentHtml += `
+      <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
+        <div style="width: 80px; text-align: center;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
+            <img src="${convertedAvatars[index]}" alt="${sender.name}" 
+                 style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
+        </div>
+      </a>
+    `
+    })
+    contentHtml += '</div>'
+
+    snapshotContainer.innerHTML = contentHtml
 
     // Capture the snapshot
     const canvas = await html2canvas(snapshotContainer, {
@@ -136,82 +182,82 @@ async function downloadImageResult() {
       width: resultDiv.offsetWidth,
       height: snapshotContainer.offsetHeight,
       scrollY: -window.scrollY
-    });
+    })
 
     // Remove the temporary container
-    document.body.removeChild(snapshotContainer);
+    document.body.removeChild(snapshotContainer)
 
     // Create download link
-    const link = document.createElement('a');
-    link.download = 'zaplist_result.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    const link = document.createElement('a')
+    link.download = 'zaplist_result.png'
+    link.href = canvas.toDataURL('image/png')
+    link.click()
   } catch (err) {
-    console.error("Error: " + err);
-    alert("An error occurred while generating the image. Please try again.");
+    console.error("Error: " + err)
+    alert("An error occurred while generating the image. Please try again.")
   }
 }
 
 async function login() {
   if (typeof window.nostr === 'undefined') {
-    alert('Nostr extension not found. Please install a Nostr-compatible browser extension.');
-    return;
+    alert('Nostr extension not found. Please install a Nostr-compatible browser extension.')
+    return
   }
 
   try {
-    const pubkey = await window.nostr.getPublicKey();
-    loggedInUser = pubkey;
-    updateLoginState();
-    document.getElementById('pubkeyInput').value = pubkey;
-    await fetchUserProfile(pubkey);
+    const pubkey = await window.nostr.getPublicKey()
+    loggedInUser = pubkey
+    updateLoginState()
+    document.getElementById('pubkeyInput').value = pubkey
+    await fetchUserProfile(pubkey)
   } catch (error) {
-    console.error('Error during login:', error);
-    alert('Failed to login. Please try again.');
+    console.error('Error during login:', error)
+    alert('Failed to login. Please try again.')
   }
 }
 
 function logout() {
-  loggedInUser = null;
-  updateLoginState();
-  document.getElementById('pubkeyInput').value = '';
-  document.getElementById('userProfile').style.display = 'none';
-  document.getElementById('pubkeyInputContainer').style.display = 'block';
-  document.body.style.backgroundImage = 'none';
+  loggedInUser = null
+  updateLoginState()
+  document.getElementById('pubkeyInput').value = ''
+  document.getElementById('userProfile').style.display = 'none'
+  document.getElementById('pubkeyInputContainer').style.display = 'block'
+  document.body.style.backgroundImage = 'none'
 }
 
 async function fetchUserProfile(pubkey) {
-  const relays = document.getElementById('relaysInput').value.split(',').map(relay => relay.trim());
-  const profiles = await getProfiles([pubkey], relays);
-  const profile = profiles[pubkey] || {};
+  const relays = document.getElementById('relaysInput').value.split(',').map(relay => relay.trim())
+  const profiles = await getProfiles([pubkey], relays)
+  const profile = profiles[pubkey] || {}
 
-  const npub = nip19.npubEncode(pubkey);
-  const avatarUrl = profile.avatar || '';
+  const npub = nip19.npubEncode(pubkey)
+  const avatarUrl = profile.avatar || ''
 
-  document.getElementById('userBanner').src = profile.banner || '';
-  document.getElementById('userAvatar').src = avatarUrl;
-  document.getElementById('userName').textContent = profile.name || 'Unknown';
-  document.getElementById('userProfile').style.display = 'block';
-  document.getElementById('pubkeyInputContainer').style.display = 'none';
+  document.getElementById('userBanner').src = profile.banner || ''
+  document.getElementById('userAvatar').src = avatarUrl
+  document.getElementById('userName').textContent = profile.name || 'Unknown'
+  document.getElementById('userProfile').style.display = 'block'
+  document.getElementById('pubkeyInputContainer').style.display = 'none'
 
   // Set the banner as the background image
   if (profile.banner) {
-    document.body.style.backgroundImage = `url(${profile.banner})`;
+    document.body.style.backgroundImage = `url(${profile.banner})`
   }
 }
 
 function updateLoginState() {
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const zapLink = document.getElementById('zap');
+  const loginBtn = document.getElementById('loginBtn')
+  const logoutBtn = document.getElementById('logoutBtn')
+  const zapLink = document.getElementById('zap')
 
   if (loggedInUser) {
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-block';
-    zapLink.innerHTML = '⚡️ Zap';
+    loginBtn.style.display = 'none'
+    logoutBtn.style.display = 'inline-block'
+    zapLink.innerHTML = '⚡️ Zap'
   } else {
-    loginBtn.style.display = 'inline-block';
-    logoutBtn.style.display = 'none';
-    zapLink.innerHTML = '⚡️ Zap';
+    loginBtn.style.display = 'inline-block'
+    logoutBtn.style.display = 'none'
+    zapLink.innerHTML = '⚡️ Zap'
   }
 }
 
@@ -220,13 +266,13 @@ flatpickr("#dateRangeInput", {
   mode: "range",
   dateFormat: "Y-m-d",
   defaultDate: [new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), new Date()],
-});
+})
 
 // Add event listeners to the buttons
-document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult);
-document.getElementById('fetchButton').addEventListener('click', fetchZapSenders);
-document.getElementById('loginBtn').addEventListener('click', login);
-document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult)
+document.getElementById('fetchButton').addEventListener('click', fetchZapSenders)
+document.getElementById('loginBtn').addEventListener('click', login)
+document.getElementById('logoutBtn').addEventListener('click', logout)
 
 // Initialize login state
-updateLoginState();
+updateLoginState()
