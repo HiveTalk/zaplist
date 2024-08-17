@@ -6,6 +6,7 @@ let loggedInUser = null
 let zapSendersResults = null
 
 const defaultAvatar = "https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg"
+const corsProxy = "https://corsproxy.io/?"
 
 function convertToHexIfNpub(pubkey) {
   if (pubkey.startsWith('npub')) {
@@ -119,8 +120,11 @@ function loadImage(src) {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
-    img.src = src
+    img.onerror = () => {
+      console.error(`Failed to load image: ${src}`)
+      resolve(null)
+    }
+    img.src = corsProxy + encodeURIComponent(src)
   })
 }
 
@@ -138,12 +142,8 @@ async function downloadImageResult() {
     // Preload images
     const loadedImages = await Promise.all(
       zapSendersResults.map(async (sender) => {
-        try {
-          return await loadImage(sender.avatarUrl)
-        } catch (error) {
-          console.error(`Error loading image for ${sender.name}:`, error)
-          return await loadImage(defaultAvatar)
-        }
+        const img = await loadImage(sender.avatarUrl)
+        return img || await loadImage(defaultAvatar)
       })
     )
 
