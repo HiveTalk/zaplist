@@ -113,7 +113,7 @@ async function fetchZapSenders() {
   }
 }
 
-async function preloadAndConvertImage(url) {
+async function convertImageToDataURL(url) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
@@ -125,15 +125,16 @@ async function preloadAndConvertImage(url) {
       ctx.drawImage(img, 0, 0)
       resolve(canvas.toDataURL('image/png'))
     }
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+    img.onerror = () => {
+      console.error(`Failed to load image: ${url}`)
+      resolve(null) // Resolve with null instead of rejecting
+    }
     img.src = url
   })
 }
 
 async function downloadImageResult() {
   try {
-    const fetchButton = document.getElementById('fetchButton')
-    const downloadImageBtn = document.getElementById('downloadImageBtn')
     const resultDiv = document.getElementById('results')
     
     // Create a container for the snapshot
@@ -146,12 +147,8 @@ async function downloadImageResult() {
     // Preload and convert images
     const convertedAvatars = await Promise.all(
       zapSendersResults.map(async (sender) => {
-        try {
-          return await preloadAndConvertImage(sender.avatarUrl)
-        } catch (error) {
-          console.error(`Error converting image for ${sender.name}:`, error)
-          return sender.avatarUrl // Fallback to original URL if conversion fails
-        }
+        const convertedUrl = await convertImageToDataURL(sender.avatarUrl)
+        return convertedUrl || sender.avatarUrl // Fall back to original URL if conversion fails
       })
     )
 
@@ -159,15 +156,13 @@ async function downloadImageResult() {
     let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
     zapSendersResults.forEach((sender, index) => {
       contentHtml += `
-      <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
-        <div style="width: 80px; text-align: center;">
-          <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${convertedAvatars[index]}" alt="${sender.name}" 
-                 style="width: 100%; height: 100%; object-fit: cover;">
-          </div>
-          <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
+      <div style="width: 80px; text-align: center;">
+        <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
+          <img src="${convertedAvatars[index]}" alt="${sender.name}" 
+               style="width: 100%; height: 100%; object-fit: cover;">
         </div>
-      </a>
+        <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
+      </div>
     `
     })
     contentHtml += '</div>'
