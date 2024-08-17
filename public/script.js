@@ -63,40 +63,12 @@ async function getProfiles(pubkeys, relays) {
   }, {})
 }
 
-async function cacheAvatar(url, npub) {
-  try {
-    const response = await fetch(url)
-    const blob = await response.blob()
-    const fileExtension = blob.type.split('/')[1]
-    const fileName = `avatar_${npub}.${fileExtension}`
-    const formData = new FormData()
-    formData.append('file', blob, fileName)
-
-    const cacheResponse = await fetch('/api/cache-avatar', {
-      method: 'POST',
-      body: formData
-    })
-
-    if (cacheResponse.ok) {
-      const cachedUrl = await cacheResponse.text()
-      cachedAvatars.set(npub, cachedUrl)
-      return cachedUrl
-    } else {
-      console.error('Failed to cache avatar:', await cacheResponse.text())
-      return url
-    }
-  } catch (error) {
-    console.error('Error caching avatar:', error)
-    return url
-  }
-}
-
 async function fetchZapSenders() {
   const pubkeyInput = document.getElementById('pubkeyInput')
   const relaysInput = document.getElementById('relaysInput')
   const dateRangeInput = document.getElementById('dateRangeInput')
   const resultsDiv = document.getElementById('results')
-  const downloadAvatarsBtn = document.getElementById('downloadAvatarsBtn')
+  const downloadImageBtn = document.getElementById('downloadImageBtn')
   
   let myPubkey = pubkeyInput.value.trim()
   const relays = relaysInput.value.split(',').map(relay => relay.trim())
@@ -115,16 +87,14 @@ async function fetchZapSenders() {
       const profile = profiles[pubkey] || {}
       const npub = nip19.npubEncode(pubkey)
       const avatarUrl = profile.avatar || defaultAvatar
-      const cachedAvatarUrl = await cacheAvatar(avatarUrl, npub)
 
       resultsHtml += `
       <a href="https://njump.me/${npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
           <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-            <img src="${cachedAvatarUrl}" alt="${profile.name || 'Unknown'}" 
+            <img src="${avatarUrl}" alt="${profile.name || 'Unknown'}" 
                  style="width: 100%; height: 100%; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='${defaultAvatar}';"
-                 data-original-src="${cachedAvatarUrl}">
+                 onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${profile.name || 'Unknown'}</p>
         </div>
@@ -134,62 +104,44 @@ async function fetchZapSenders() {
     resultsHtml += '</div>'
 
     resultsDiv.innerHTML = resultsHtml || 'No zap senders found.'
-    downloadAvatarsBtn.style.display = 'inline-block'
+    downloadImageBtn.style.display = 'inline-block'
   } catch (error) {
     resultsDiv.innerHTML = `Error: ${error.message}`
   }
 }
 
-function downloadHtmlResult() {
-  const resultDiv = document.getElementById('results');
-  if (!resultDiv) {
-      alert('Results section not found!');
-      return;
-  }
-  const htmlContent = resultDiv.innerHTML;
-  const blob = new Blob([htmlContent], { type: 'text/html' });
-
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'result.html';
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
 async function downloadImageResult() {
   try {
+    const fetchButton = document.getElementById('fetchButton');
+    const downloadImageBtn = document.getElementById('downloadImageBtn');
     const resultDiv = document.getElementById('results');
     
-    // Pre-load all images
-    const images = resultDiv.getElementsByTagName('img');
-    await Promise.all(Array.from(images).map(img => {
-      return new Promise((resolve, reject) => {
-        const newImg = new Image();
-        newImg.crossOrigin = 'anonymous';
-        newImg.onload = () => {
-          img.src = newImg.src;
-          resolve();
-        };
-        newImg.onerror = reject;
-        newImg.src = img.getAttribute('data-original-src') || img.src;
-      });
-    }));
+    // Create a container for the snapshot
+    const snapshotContainer = document.createElement('div');
+    snapshotContainer.style.position = 'absolute';
+    snapshotContainer.style.left = '-9999px';
+    snapshotContainer.style.width = resultDiv.offsetWidth + 'px';
+    document.body.appendChild(snapshotContainer);
 
-    const canvas = await html2canvas(resultDiv, {
+    // Clone the content between the buttons
+    const clone = document.createElement('div');
+    clone.innerHTML = resultDiv.innerHTML;
+    snapshotContainer.appendChild(clone);
+
+    // Capture the snapshot
+    const canvas = await html2canvas(snapshotContainer, {
       useCORS: true,
       allowTaint: true,
-      backgroundColor: null,
-      logging: true,
-      onclone: (clonedDoc) => {
-        const clonedImages = clonedDoc.getElementsByTagName('img');
-        for (let img of clonedImages) {
-          img.crossOrigin = 'anonymous';
-        }
-      }
+      backgroundColor: window.getComputedStyle(document.body).backgroundColor,
+      width: resultDiv.offsetWidth,
+      height: snapshotContainer.offsetHeight,
+      scrollY: -window.scrollY
     });
 
+    // Remove the temporary container
+    document.body.removeChild(snapshotContainer);
+
+    // Create download link
     const link = document.createElement('a');
     link.download = 'zaplist_result.png';
     link.href = canvas.toDataURL('image/png');
@@ -198,22 +150,6 @@ async function downloadImageResult() {
     console.error("Error: " + err);
     alert("An error occurred while generating the image. Please try again.");
   }
-}
-
-async function downloadAvatars() {
-  const resultDiv = document.getElementById('results');
-  const images = resultDiv.querySelectorAll('img');
-  const zip = new JSZip();
-
-  for (let i = 0; i < images.length; i++) {
-    const img = images[i];
-    const response = await fetch(img.getAttribute('data-original-src'));
-    const blob = await response.blob();
-    zip.file(`avatar_${i + 1}.${blob.type.split('/')[1]}`, blob);
-  }
-
-  const content = await zip.generateAsync({ type: "blob" });
-  saveAs(content, "avatars.zip");
 }
 
 async function login() {
@@ -250,10 +186,9 @@ async function fetchUserProfile(pubkey) {
 
   const npub = nip19.npubEncode(pubkey);
   const avatarUrl = profile.avatar || '';
-  const cachedAvatarUrl = avatarUrl ? await cacheAvatar(avatarUrl, npub) : '';
 
   document.getElementById('userBanner').src = profile.banner || '';
-  document.getElementById('userAvatar').src = cachedAvatarUrl;
+  document.getElementById('userAvatar').src = avatarUrl;
   document.getElementById('userName').textContent = profile.name || 'Unknown';
   document.getElementById('userProfile').style.display = 'block';
   document.getElementById('pubkeyInputContainer').style.display = 'none';
@@ -288,9 +223,7 @@ flatpickr("#dateRangeInput", {
 });
 
 // Add event listeners to the buttons
-document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlResult);
 document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult);
-document.getElementById('downloadAvatarsBtn').addEventListener('click', downloadAvatars);
 document.getElementById('fetchButton').addEventListener('click', fetchZapSenders);
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('logoutBtn').addEventListener('click', logout);
