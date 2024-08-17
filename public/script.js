@@ -72,6 +72,7 @@ async function fetchZapSenders() {
   const dateRangeInput = document.getElementById('dateRangeInput')
   const resultsDiv = document.getElementById('results')
   const downloadImageBtn = document.getElementById('downloadImageBtn')
+  const downloadAvatarsBtn = document.getElementById('downloadAvatarsBtn')
   
   let myPubkey = pubkeyInput.value.trim()
   const relays = relaysInput.value.split(',').map(relay => relay.trim())
@@ -110,6 +111,7 @@ async function fetchZapSenders() {
 
     resultsDiv.innerHTML = resultsHtml || 'No zap senders found.'
     downloadImageBtn.style.display = 'inline-block'
+    downloadAvatarsBtn.style.display = 'inline-block'
   } catch (error) {
     resultsDiv.innerHTML = `Error: ${error.message}`
   }
@@ -189,6 +191,25 @@ async function downloadImageResult() {
   }
 }
 
+async function downloadAvatars() {
+  const zip = new JSZip()
+  const avatarPromises = zapSendersResults.map(async (sender, index) => {
+    try {
+      const response = await fetch(corsProxy + encodeURIComponent(sender.avatarUrl))
+      const blob = await response.blob()
+      const fileName = `avatar_${index + 1}.${blob.type.split('/')[1]}`
+      zip.file(fileName, blob)
+    } catch (error) {
+      console.error(`Failed to download avatar for ${sender.name}:`, error)
+    }
+  })
+
+  await Promise.all(avatarPromises)
+
+  const content = await zip.generateAsync({ type: "blob" })
+  saveAs(content, "zap_senders_avatars.zip")
+}
+
 async function login() {
   if (typeof window.nostr === 'undefined') {
     alert('Nostr extension not found. Please install a Nostr-compatible browser extension.')
@@ -261,6 +282,7 @@ flatpickr("#dateRangeInput", {
 
 // Add event listeners to the buttons
 document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult)
+document.getElementById('downloadAvatarsBtn').addEventListener('click', downloadAvatars)
 document.getElementById('fetchButton').addEventListener('click', fetchZapSenders)
 document.getElementById('loginBtn').addEventListener('click', login)
 document.getElementById('logoutBtn').addEventListener('click', logout)
