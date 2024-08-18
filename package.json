@@ -12,6 +12,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
-    "nostr-tools": "^2.7.1"
+    "nostr-tools": "^2.7.1",
+    "sharp": "^0.33.5"
   }
 }
