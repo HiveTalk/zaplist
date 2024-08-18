@@ -73,12 +73,14 @@ async function fetchZapSenders() {
   const resultsDiv = document.getElementById('results')
   const downloadImageBtn = document.getElementById('downloadImageBtn')
   const downloadAvatarsBtn = document.getElementById('downloadAvatarsBtn')
+  const loadingIndicator = document.getElementById('loadingIndicator')
   
   let myPubkey = pubkeyInput.value.trim()
   const relays = relaysInput.value.split(',').map(relay => relay.trim())
   const [startDate, endDate] = dateRangeInput.value.split(' to ')
 
-  resultsDiv.innerHTML = 'Fetching zap senders...'
+  resultsDiv.innerHTML = ''
+  loadingIndicator.style.display = 'block'
 
   try {
     myPubkey = convertToHexIfNpub(myPubkey)
@@ -114,6 +116,8 @@ async function fetchZapSenders() {
     downloadAvatarsBtn.style.display = 'inline-block'
   } catch (error) {
     resultsDiv.innerHTML = `Error: ${error.message}`
+  } finally {
+    loadingIndicator.style.display = 'none'
   }
 }
 
@@ -133,6 +137,8 @@ function loadImage(src) {
 async function downloadImageResult() {
   try {
     const resultDiv = document.getElementById('results')
+    const loadingIndicator = document.getElementById('loadingIndicator')
+    loadingIndicator.style.display = 'block'
     
     // Create a container for the snapshot
     const snapshotContainer = document.createElement('div')
@@ -188,10 +194,15 @@ async function downloadImageResult() {
   } catch (err) {
     console.error("Error: " + err)
     alert("An error occurred while generating the image. Please try again.")
+  } finally {
+    loadingIndicator.style.display = 'none'
   }
 }
 
 async function downloadAvatars() {
+  const loadingIndicator = document.getElementById('loadingIndicator')
+  loadingIndicator.style.display = 'block'
+
   const zip = new JSZip()
   const avatarPromises = zapSendersResults.map(async (sender, index) => {
     try {
@@ -208,6 +219,7 @@ async function downloadAvatars() {
 
   const content = await zip.generateAsync({ type: "blob" })
   saveAs(content, "zap_senders_avatars.zip")
+  loadingIndicator.style.display = 'none'
 }
 
 async function login() {
