@@ -23,7 +23,9 @@ visit http://localhost:3000
 - accept both hex and npub as inputs
 - Add a nostr NIP-07 login
 - Allow user to pick from a calendar instead of X days
-- Ensure no white-on-white text rendering when the user is logged in (without using dark mode)
+- Implement dark mode:
+  - Ensure the application uses a dark color scheme
+  - Prevent white-on-white text rendering when the user is logged in
 - Improve download functionality:
   - Ensure HTML and ZIP downloads are working properly
   - Optimize download speed if possible
