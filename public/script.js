@@ -99,9 +99,9 @@ async function fetchZapSenders() {
       resultsHtml += `
       <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
-          <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative;">
             <img src="${sender.avatarUrl}" alt="${sender.name}" 
-                 style="width: 100%; height: 100%; object-fit: cover;"
+                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
@@ -125,7 +125,27 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
+    img.onload = () => {
+      // Create a square canvas
+      const size = Math.max(img.width, img.height)
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
+
+      // Fill the canvas with a transparent background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)'
+      ctx.fillRect(0, 0, size, size)
+
+      // Calculate position to center the image
+      const xOffset = (size - img.width) / 2
+      const yOffset = (size - img.height) / 2
+
+      // Draw the image centered on the canvas
+      ctx.drawImage(img, xOffset, yOffset, img.width, img.height)
+
+      resolve(canvas)
+    }
     img.onerror = () => {
       console.error(`Failed to load image: ${src}`)
       resolve(null)
@@ -158,11 +178,11 @@ async function downloadImageResult() {
     // Create content with loaded images
     let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
     zapSendersResults.forEach((sender, index) => {
-      const img = loadedImages[index]
+      const canvas = loadedImages[index]
       contentHtml += `
       <div style="width: 80px; text-align: center;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-          <img src="${img.src}" alt="${sender.name}" 
+        <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative;">
+          <img src="${canvas.toDataURL()}" alt="${sender.name}" 
                style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
@@ -220,6 +240,130 @@ async function downloadAvatars() {
   const content = await zip.generateAsync({ type: "blob" })
   saveAs(content, "zap_senders_avatars.zip")
   loadingIndicator.style.display = 'none'
+}
+
+async function downloadHtmlResult() {
+  if (!zapSendersResults) {
+    alert('No results to download. Please fetch zap senders first.');
+    return;
+  }
+
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  loadingIndicator.style.display = 'block';
+
+  try {
+    let htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Zap Senders Result</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f0f0f0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+        }
+        .container {
+          background-color: white;
+          border-radius: 10px;
+          padding: 20px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: center;
+        }
+        .avatar {
+          width: 80px;
+          text-align: center;
+        }
+        .avatar-container {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          overflow: hidden;
+          position: relative;
+        }
+        .avatar img {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .avatar p {
+          margin: 5px 0;
+          font-size: 12px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="grid">
+    `;
+
+    for (const sender of zapSendersResults) {
+      try {
+        const response = await fetch(corsProxy + encodeURIComponent(sender.avatarUrl));
+        const blob = await response.blob();
+        const base64data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+
+        htmlContent += `
+          <div class="avatar">
+            <div class="avatar-container">
+              <img src="${base64data}" alt="${sender.name}" onerror="this.onerror=null; this.src='${defaultAvatar}';">
+            </div>
+            <p>${sender.name}</p>
+          </div>
+        `;
+      } catch (error) {
+        console.error(`Failed to fetch avatar for ${sender.name}:`, error);
+        htmlContent += `
+          <div class="avatar">
+            <div class="avatar-container">
+              <img src="${defaultAvatar}" alt="${sender.name}">
+            </div>
+            <p>${sender.name}</p>
+          </div>
+        `;
+      }
+    }
+
+    htmlContent += `
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'zaplist_result.html';
+    link.click();
+  } catch (error) {
+    console.error("Error generating HTML result:", error);
+    alert("An error occurred while generating the HTML result. Please try again.");
+  } finally {
+    loadingIndicator.style.display = 'none';
+  }
 }
 
 async function login() {
@@ -293,6 +437,7 @@ flatpickr("#dateRangeInput", {
 })
 
 // Add event listeners to the buttons
+document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlResult)
 document.getElementById('downloadImageBtn').addEventListener('click', downloadImageResult)
 document.getElementById('downloadAvatarsBtn').addEventListener('click', downloadAvatars)
 document.getElementById('fetchButton').addEventListener('click', fetchZapSenders)
