@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta property="og:title" content="Zaplist">
@@ -9,7 +9,7 @@
     <meta property="og:type" content="website">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nostr Zap Senders</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -17,59 +17,63 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        :root {
-            --background-color: #ffffff;
-            --text-color: #333333;
-            --container-background: #f8f8f8;
-        }
-        body.dark-mode {
-            --background-color: #1a1a1a;
-            --text-color: #ffffff;
-            --container-background: #2a2a2a;
-        }
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background-color: #333333;
+            color: #ffffff;
         }
         .container {
-            background-color: var(--container-background);
+            background-color: #222222;
             border-radius: 10px;
             padding: 20px;
             margin-top: 20px;
         }
+        nav strong, nav a {
+            color: #ffffff;
+        }
+        input, textarea {
+            color: #ffffff;
+            background-color: #444444;
+        }
+        #fetchButton, #downloadHtmlBtn, #downloadImageBtn, #downloadAvatarsBtn {
+            background-color: #7921B1;
+            color: white;
+        }
+        h1, h2, p, label {
+            color: #ffffff;
+        }
         .flatpickr-calendar {
-            background: var(--background-color);
+            background: #333;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             font-family: Arial, sans-serif;
         }
         .flatpickr-day {
-            color: var(--text-color);
+            color: #fff;
             border-radius: 0;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #555;
             transition: background-color 0.3s, color 0.3s;
         }
         .flatpickr-day:hover {
-            background-color: var(--primary-hover);
+            background-color: #7921B1;
             color: #fff;
         }
         .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
         .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus,
         .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: #7921B1;
+            border-color: #7921B1;
             color: #fff;
         }
         .flatpickr-day.inRange {
-            background: var(--primary-hover);
-            border-color: var(--primary-hover);
+            background: #9B4FD3;
+            border-color: #9B4FD3;
             color: #fff;
         }
         .flatpickr-current-month, .flatpickr-weekdays {
-            color: var(--primary);
+            color: #7921B1;
         }
         .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
-            fill: var(--primary);
+            fill: #7921B1;
         }
         #userProfile {
             display: none;
@@ -91,21 +95,20 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            border: 4px solid var(--background-color);
+            border: 4px solid #333;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            object-fit: cover;
         }
         #userName {
             position: absolute;
             bottom: 160px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(0, 0, 0, 0.8);
             padding: 5px 10px;
             border-radius: 15px;
             font-size: 1.2em;
             font-weight: bold;
-            color: #333;
+            color: #fff;
         }
         nav img {
             width: 30px;
@@ -116,21 +119,13 @@
         .avatar-placeholder {
             width: 100px;
             height: 100px;
-            background-color: #e0e0e0;
+            background-color: #555;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 24px;
-            color: #333;
-            overflow: hidden;
-        }
-        .avatar-placeholder::before {
-            content: '';
-            display: block;
-            width: 100%;
-            height: 100%;
-            background-color: #e0e0e0;
+            color: #fff;
         }
         #loadingIndicator {
             display: none;
@@ -139,7 +134,7 @@
         }
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border-top: 4px solid #7921B1;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -165,7 +160,6 @@
               <li><a href="https://hivetalk.org/support" id="zap">⚡️ Zap</a></li>
               <li><a href="https://hivetalk.org">HiveTalk</a></li>
               <li><a href="https://github.com/hivetalk/zaplist">Github</a></li>
-              <li><button id="darkModeToggle">Toggle Dark Mode</button></li>
             </ul>
         </nav>
     
@@ -212,7 +206,7 @@
         </div>
         <button id="downloadHtmlBtn">Download Result as .html</button>
         <button id="downloadImageBtn">Download Result as Image</button>
-        <button id="downloadAvatarsBtn" style="display: none;">Download Avatars as ZIP</button>
+        <button id="downloadAvatarsBtn">Download Avatars as ZIP</button>
 
         <h2>Contributing</h2>
         <p>
