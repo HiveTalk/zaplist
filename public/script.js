@@ -5,7 +5,7 @@ const pool = new SimplePool()
 let loggedInUser = null
 let zapSendersResults = null
 
-const defaultAvatar = "https://image.nostr.build/8a7acc13b5102c660a7974ebf57b11b613bb6862cf55196d624a09191ac6cc5f.jpg"
+const defaultAvatar = "https://image.nostr.build/56795451a7e9935992b6078f0ee40ea4b0013f8efdf954fb41a3a6a7c33f25a7.png"
 const corsProxy = "https://corsproxy.io/?"
 
 function convertToHexIfNpub(pubkey) {
@@ -99,8 +99,9 @@ async function fetchZapSenders() {
       resultsHtml += `
       <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
-          <div class="avatar-container">
+          <div class="avatar-container" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
             <img src="${sender.avatarUrl}" alt="${sender.name}" 
+                 style="width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
@@ -120,55 +121,70 @@ async function fetchZapSenders() {
   }
 }
 
-async function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => {
-      console.error(`Failed to load image: ${src}`)
-      img.src = defaultAvatar
-      img.onload = () => resolve(img)
-    }
-    img.src = src.startsWith('http') ? (corsProxy + encodeURIComponent(src)) : src
-  })
-}
-
 async function downloadImageResult() {
   try {
-    const resultDiv = document.getElementById('results')
-    const loadingIndicator = document.getElementById('loadingIndicator')
-    loadingIndicator.style.display = 'block'
+    const resultDiv = document.getElementById('results');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    loadingIndicator.style.display = 'block';
     
     // Create a container for the snapshot
-    const snapshotContainer = document.createElement('div')
-    snapshotContainer.style.position = 'absolute'
-    snapshotContainer.style.left = '-9999px'
-    snapshotContainer.style.width = resultDiv.offsetWidth + 'px'
-    snapshotContainer.style.backgroundColor = '#333333'
-    document.body.appendChild(snapshotContainer)
-
-    // Preload images
-    const loadedImages = await Promise.all(
-      zapSendersResults.map(sender => loadImage(sender.avatarUrl))
-    )
+    const snapshotContainer = document.createElement('div');
+    snapshotContainer.style.position = 'absolute';
+    snapshotContainer.style.left = '-9999px';
+    snapshotContainer.style.width = resultDiv.offsetWidth + 'px';
+    snapshotContainer.style.backgroundColor = '#333333';
+    snapshotContainer.style.padding = '20px';
+    document.body.appendChild(snapshotContainer);
 
     // Create content with loaded images
-    let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
-    loadedImages.forEach((img, index) => {
-      const sender = zapSendersResults[index]
-      contentHtml += `
-      <div style="width: 80px; text-align: center;">
-        <div class="avatar-container" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
-          <img src="${img.src}" alt="${sender.name}" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;">${sender.name}</p>
-      </div>
-    `
-    })
-    contentHtml += '</div>'
+    let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">';
+    
+    // Function to load image with fallback
+    const loadImage = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          img.src = defaultAvatar;
+          img.onload = () => resolve(img);
+        };
+        img.src = src;
+      });
+    };
 
-    snapshotContainer.innerHTML = contentHtml
+    // Load all images first
+    const loadedImages = await Promise.all(zapSendersResults.map(sender => loadImage(sender.avatarUrl)));
+
+    // Create HTML content with loaded images
+    zapSendersResults.forEach((sender, index) => {
+      contentHtml += `
+        <div style="width: 80px; text-align: center;">
+          <div class="avatar-container" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
+            <img src="${loadedImages[index].src}" alt="${sender.name}" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;">${sender.name}</p>
+        </div>
+      `;
+    });
+    contentHtml += '</div>';
+
+    snapshotContainer.innerHTML = contentHtml;
+
+    // Ensure all images are fully loaded
+    await Promise.all(Array.from(snapshotContainer.getElementsByTagName('img')).map(img => {
+      return new Promise((resolve) => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = resolve;
+          img.onerror = () => {
+            img.src = defaultAvatar;
+            img.onload = resolve;
+          };
+        }
+      });
+    }));
 
     // Capture the snapshot
     const canvas = await html2canvas(snapshotContainer, {
@@ -177,22 +193,23 @@ async function downloadImageResult() {
       backgroundColor: '#333333',
       width: resultDiv.offsetWidth,
       height: snapshotContainer.offsetHeight,
-      scale: 2
-    })
+      scale: 2,
+      logging: true, // Enable logging for debugging
+    });
 
     // Remove the temporary container
-    document.body.removeChild(snapshotContainer)
+    document.body.removeChild(snapshotContainer);
 
     // Create download link
-    const link = document.createElement('a')
-    link.download = 'zaplist_result.png'
-    link.href = canvas.toDataURL('image/png')
-    link.click()
+    const link = document.createElement('a');
+    link.download = 'zaplist_result.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   } catch (err) {
-    console.error("Error: " + err)
-    alert("An error occurred while generating the image. Please try again.")
+    console.error("Error: ", err);
+    alert("An error occurred while generating the image. Please try again.");
   } finally {
-    loadingIndicator.style.display = 'none'
+    loadingIndicator.style.display = 'none';
   }
 }
 
