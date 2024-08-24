@@ -99,9 +99,8 @@ async function fetchZapSenders() {
       resultsHtml += `
       <a href="https://njump.me/${sender.npub}" target="_blank" style="text-decoration: none; color: inherit;">
         <div style="width: 80px; text-align: center;">
-          <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative;">
+          <div class="avatar-container">
             <img src="${sender.avatarUrl}" alt="${sender.name}" 
-                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; object-fit: cover;"
                  onerror="this.onerror=null; this.src='${defaultAvatar}';">
           </div>
           <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
@@ -121,36 +120,17 @@ async function fetchZapSenders() {
   }
 }
 
-function loadImage(src) {
+async function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      // Create a square canvas
-      const size = Math.max(img.width, img.height)
-      const canvas = document.createElement('canvas')
-      canvas.width = size
-      canvas.height = size
-      const ctx = canvas.getContext('2d')
-
-      // Fill the canvas with a transparent background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0)'
-      ctx.fillRect(0, 0, size, size)
-
-      // Calculate position to center the image
-      const xOffset = (size - img.width) / 2
-      const yOffset = (size - img.height) / 2
-
-      // Draw the image centered on the canvas
-      ctx.drawImage(img, xOffset, yOffset, img.width, img.height)
-
-      resolve(canvas)
-    }
+    img.onload = () => resolve(img)
     img.onerror = () => {
       console.error(`Failed to load image: ${src}`)
-      resolve(null)
+      img.src = defaultAvatar
+      img.onload = () => resolve(img)
     }
-    img.src = corsProxy + encodeURIComponent(src)
+    img.src = src.startsWith('http') ? (corsProxy + encodeURIComponent(src)) : src
   })
 }
 
@@ -165,27 +145,24 @@ async function downloadImageResult() {
     snapshotContainer.style.position = 'absolute'
     snapshotContainer.style.left = '-9999px'
     snapshotContainer.style.width = resultDiv.offsetWidth + 'px'
+    snapshotContainer.style.backgroundColor = '#333333'
     document.body.appendChild(snapshotContainer)
 
     // Preload images
     const loadedImages = await Promise.all(
-      zapSendersResults.map(async (sender) => {
-        const img = await loadImage(sender.avatarUrl)
-        return img || await loadImage(defaultAvatar)
-      })
+      zapSendersResults.map(sender => loadImage(sender.avatarUrl))
     )
 
     // Create content with loaded images
     let contentHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">'
-    zapSendersResults.forEach((sender, index) => {
-      const canvas = loadedImages[index]
+    loadedImages.forEach((img, index) => {
+      const sender = zapSendersResults[index]
       contentHtml += `
       <div style="width: 80px; text-align: center;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative;">
-          <img src="${canvas.toDataURL()}" alt="${sender.name}" 
-               style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="avatar-container" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">
+          <img src="${img.src}" alt="${sender.name}" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
-        <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sender.name}</p>
+        <p style="margin: 5px 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;">${sender.name}</p>
       </div>
     `
     })
@@ -197,10 +174,10 @@ async function downloadImageResult() {
     const canvas = await html2canvas(snapshotContainer, {
       useCORS: true,
       allowTaint: true,
-      backgroundColor: window.getComputedStyle(document.body).backgroundColor,
+      backgroundColor: '#333333',
       width: resultDiv.offsetWidth,
       height: snapshotContainer.offsetHeight,
-      scrollY: -window.scrollY
+      scale: 2
     })
 
     // Remove the temporary container
@@ -262,7 +239,7 @@ async function downloadHtmlResult() {
       <style>
         body {
           font-family: Arial, sans-serif;
-          background-color: #f0f0f0;
+          background-color: #333333;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -270,7 +247,7 @@ async function downloadHtmlResult() {
           margin: 0;
         }
         .container {
-          background-color: white;
+          background-color: #222222;
           border-radius: 10px;
           padding: 20px;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -292,11 +269,7 @@ async function downloadHtmlResult() {
           overflow: hidden;
           position: relative;
         }
-        .avatar img {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+        .avatar-container img {
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -307,6 +280,7 @@ async function downloadHtmlResult() {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          color: white;
         }
       </style>
     </head>
