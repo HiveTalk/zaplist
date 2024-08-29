@@ -20,16 +20,8 @@ visit http://localhost:3000
 
 ## Good First issues (Todo Items)
 
-- accept both hex and npub as inputs
-- Add a nostr NIP-07 login
-- Allow user to pick from a calendar instead of X days
-- Implement dark mode:
-  - Ensure the application uses a dark color scheme
-  - Prevent white-on-white text rendering when the user is logged in
 - Improve download functionality:
-  - Ensure HTML and ZIP downloads are working properly
-  - Optimize download speed if possible
-  - Add a "Downloading..." text while waiting for HTML, ZIP, and avatar results
+  - Add HTML to ZIP downloads
 - Fix avatar placeholder rendering:
   - Ensure the default avatar image extends to fill the borders of its circle, avoiding oval shapes
 
