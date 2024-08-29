@@ -18,12 +18,9 @@ npm run start
 
 visit http://localhost:3000
 
-## Good First issues (Todo Items)
+## Good First issues
 
-- Improve download functionality:
-  - Add HTML to ZIP downloads
-- Fix avatar placeholder rendering:
-  - Ensure the default avatar image extends to fill the borders of its circle, avoiding oval shapes
+- see https://github.com/HiveTalk/zaplist/issues
 
 ## Contributing
 
