@@ -10,7 +10,7 @@
   "license": "MIT",
   "description": "get list of zap senders, avatars and nostr profile links",
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "fs": "^0.0.1-security",
     "nostr-tools": "^2.7.1",
     "sharp": "^0.33.5"
