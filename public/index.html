@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:title" content="Zaplist">
+    <meta property="og:description" content="Generate a grid of who sent you zaps">
+    <meta property="og:image" content="https://zaplist.hivetalk.org/images/snapshot.png">
+    <meta property="og:url" content="https://zaplist.hivetalk.org">
+    <meta property="og:type" content="website">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostr Zap Senders</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.violet.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Remove or comment out this line -->
+    <!-- <link rel="preload" href="https://image.nostr.build/56795451a7e9935992b6078f0ee40ea4b0013f8efdf954fb41a3a6a7c33f25a7.png" as="image"> -->
+</head>
+<body>
+    <div class="dropdown">
+        <button class="dropbtn">Start</button>
+        <div class="dropdown-content">
+            <a href="#" id="loginBtn">Login</a>
+            <a href="#" id="logoutBtn" style="display: none;">Logout</a>
+            <a href="#" id="walletBtn">Wallet</a>
+            <a href="https://hivetalk.org/support" id="zap">Zap</a>
+            <a href="https://hivetalk.org">HiveTalk</a>
+            <a href="https://github.com/hivetalk/zaplist">Github</a>
+        </div>
+    </div>
+    <div id="userProfile" style="display: none;">
+        <img id="userBanner" alt="User Banner">
+        <h3 id="userName"></h3>
+        <img id="userAvatar" alt="User Avatar">
+    </div>
+    <div id="wallet-info" style="display: none;">
+        <h2>Wallet Info</h2>
+        <p>Balance: <span id="balance"></span> sats</p>
+    </div>
+    <div id="payment-section" style="display: none;">
+        <h2>Generate Invoice</h2>
+        <input type="number" id="amount" placeholder="Amount in sats">
+        <button id="generate-invoice">Generate Invoice</button>
+        <div id="invoice-display" style="display: none;">
+            <h3>Invoice:</h3>
+            <p id="invoice"></p>
+            <button id="pay-invoice">Pay Invoice</button>
+        </div>
+    </div>
+    <div id="payment-status" style="display: none;"></div>
+    <div id="loadingIndicator" style="display: none;">
+        <div class="spinner"></div>
+        <span>Processing...</span>
+    </div>
+    <main>
+        <h1>Nostr ⚡️ Zap List</h1>
+        <p>Generate a grid of who sent you zaps, so you can add it to a blog or project page
+            and thank them for their support.
+            Inspired by <a href="https://contrib.rocks/">contrib.rocks</a>
+        </p>
+        <form>
+            <div id="pubkeyInputContainer">
+                <label for="pubkeyInput">Your Pubkey (npub or hex):</label>
+                <input type="text" id="pubkeyInput" placeholder="Enter your npub or hex pubkey" value="3878d95db7b854c3a0d3b2d6b7bf9bf28b36162be64326f5521ba71cf3b45a69" required>
+            </div>
+            <label for="relaysInput">Relays (comma-separated):</label>
+            <input type="text" id="relaysInput" placeholder="wss://relay.damus.io" value="wss://relay.damus.io, wss://relay.primal.net,wss://nostr.wine, wss://relay.nostr.band" required>
+            <label for="dateRangeInput">Date Range:</label>
+            <div class="grid">
+                <div>
+                    <input type="text" id="dateRangeInput" placeholder="Select date range" required>
+                </div> 
+                <div>
+                    <button type="button" id="fetchButton">Fetch Zap Senders</button>
+                </div>
+            </div>
+        </form>
+        <div id="results"></div>
+        <div id="loadingIndicator">
+            <div class="spinner"></div>
+            <span>Downloading...</span>
+        </div>
+        <button id="downloadHtmlBtn">Download Result as .html</button>
+        <button id="downloadImageBtn">Download Result as Image</button>
+        <button id="downloadAvatarsBtn">Download Avatars as ZIP</button>
+        <h2>Contributing</h2>
+        <p>New contributors welcome, this is a good micro project to get your feet wet with foss.
+            Visit the <a href="https://github.com/HiveTalk/zaplist?tab=readme-ov-file#good-first-issues-todo-items">Github</a> Readme to find out more.
+        </p>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script type="module" src="/index.js"></script>
+</body>
+</html>
